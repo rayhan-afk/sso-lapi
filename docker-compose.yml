@@ -1,0 +1,39 @@
+services:
+
+  app:
+    build: ./docker/php
+    container_name: sso_lapi_app
+    volumes:
+      - ./src:/var/www
+    ports:
+      - "8000:8000"
+    command: tail -f /dev/null
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    container_name: sso_lapi_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: sso_db
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: laravel
+    ports:
+      - "3307:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: sso_lapi_phpmyadmin
+    ports:
+      - "8082:80"
+    environment:
+      PMA_HOST: mysql
+    depends_on:
+      - mysql
+
+volumes:
+  dbdata:
