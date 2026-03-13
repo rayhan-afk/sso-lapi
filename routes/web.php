@@ -3,8 +3,17 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ApplicationController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\LogController;
 
-// Halaman awal (sementara kita buat tombol simple)
+
+/*
+|--------------------------------------------------------------------------
+| Login Portal
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/', function () {
     return '<div style="text-align:center; margin-top:50px;">
                 <h2>SSO Portal</h2>
@@ -12,11 +21,73 @@ Route::get('/', function () {
             </div>';
 })->name('login');
 
-// Rute Otentikasi
+
+/*
+|--------------------------------------------------------------------------
+| Authentication
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/auth/redirect', [AuthController::class, 'redirect']);
 Route::get('/auth/callback', [AuthController::class, 'callback']);
-// UBAH DARI ::get MENJADI ::post
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Rute Dashboard (Mengarah ke View)
-Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('auth')->name('dashboard');
+
+/*
+|--------------------------------------------------------------------------
+| Dashboard
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware('auth')
+    ->name('dashboard');
+
+
+/*
+|--------------------------------------------------------------------------
+| Admin Panel
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->prefix('admin')->group(function () {
+
+    /*
+    | Applications
+    */
+
+    Route::get('/applications', [ApplicationController::class, 'index'])
+        ->name('applications.index');
+
+    Route::get('/applications/create', [ApplicationController::class, 'create'])
+        ->name('applications.create');
+
+    Route::post('/applications', [ApplicationController::class, 'store'])
+        ->name('applications.store');
+
+
+    /*
+    | Users
+    */
+
+/*
+| Users
+*/
+
+Route::get('/users', [UserController::class, 'index'])
+    ->name('users.index');
+
+Route::get('/users/create', [UserController::class, 'create'])
+    ->name('users.create');
+
+Route::post('/users', [UserController::class, 'store'])
+    ->name('users.store');
+
+    /*
+    | Logs
+    */
+
+    Route::get('/logs', [LogController::class, 'index'])
+        ->name('logs.index');
+
+});
