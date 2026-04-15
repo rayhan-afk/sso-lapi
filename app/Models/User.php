@@ -22,6 +22,7 @@ class User extends Authenticatable
         'password',
         'jabatan',
         'is_active',
+        'role', 
     ];
 
     // 3. Matikan kolom updated_at karena di tabelmu hanya ada created_at

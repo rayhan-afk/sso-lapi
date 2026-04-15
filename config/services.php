@@ -41,6 +41,7 @@ return [
     'redirect' => env('KEYCLOAK_REDIRECT_URI'), 
     'base_url' => env('KEYCLOAK_BASE_URL'),
     'realms' => env('KEYCLOAK_REALM'),
+    'stateless' => true,
 ],
 
 ];
