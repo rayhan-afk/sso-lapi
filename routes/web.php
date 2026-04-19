@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LogActivityController;
+
 
 // Halaman awal (sementara kita buat tombol simple)
 Route::get('/', function () {
@@ -18,5 +20,6 @@ Route::get('/auth/callback', [AuthController::class, 'callback']);
 // UBAH DARI ::get MENJADI ::post
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Rute Dashboard (Mengarah ke View)
+// Rute Dashboard Admin(Mengarah ke View)
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('auth')->name('dashboard');
+Route::get('/log-activity', [LogActivityController::class, 'index'])->name('log.activity');
