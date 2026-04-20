@@ -1,4 +1,4 @@
-<aside class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between hidden md:flex shrink-0 z-20 h-screen">
+<aside id="main-sidebar" class="w-72 h-screen flex flex-col bg-white border-r border-slate-200 shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-all duration-300 ease-in-out relative z-40 hidden md:flex shrink-0">
     
     <div>
         {{-- LOGO --}}
@@ -11,7 +11,16 @@
                     LAPI<span class="text-blue-600">SSO</span>
                 </span>
             </div>
+            <span class="sidebar-text font-black text-xl tracking-tight text-slate-900 transition-opacity duration-300">
+                LAPI<span class="text-blue-600">SSO</span>
+            </span>
         </div>
+        
+        <button id="toggle-sidebar" class="text-slate-400 hover:text-blue-600 transition-colors p-1.5 rounded-lg hover:bg-blue-50 shrink-0">
+            <svg id="icon-expanded" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+            <svg id="icon-collapsed" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+        </button>
+    </div>
 
         {{-- MENU --}}
         <nav class="p-4 space-y-1.5 mt-2 overflow-y-auto">
@@ -91,9 +100,7 @@
                 </a>
 
             @endif
-
-        </nav>
-    </div>
+    </nav>
 
     {{-- FOOTER --}}
     <div class="p-4 border-t border-slate-100 bg-slate-50/50">
@@ -105,3 +112,41 @@
         </a>
     </div>
 </aside>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const sidebar = document.getElementById('main-sidebar');
+        const toggleBtn = document.getElementById('toggle-sidebar');
+        const textElements = document.querySelectorAll('.sidebar-text');
+        const iconExpanded = document.getElementById('icon-expanded');
+        const iconCollapsed = document.getElementById('icon-collapsed');
+
+        // Cek localStorage, apakah sebelumnya ditutup?
+        const isCollapsed = localStorage.getItem('lapisso_sidebar_collapsed') === 'true';
+        
+        // Fungsi untuk Set Status Buka/Tutup
+        const setSidebarState = (collapsed) => {
+            if (collapsed) {
+                sidebar.classList.replace('w-72', 'w-20');
+                textElements.forEach(el => el.classList.add('hidden'));
+                iconExpanded.classList.add('hidden');
+                iconCollapsed.classList.remove('hidden');
+            } else {
+                sidebar.classList.replace('w-20', 'w-72');
+                textElements.forEach(el => el.classList.remove('hidden'));
+                iconExpanded.classList.remove('hidden');
+                iconCollapsed.classList.add('hidden');
+            }
+        };
+
+        // Aplikasikan state saat halaman pertama load
+        if (isCollapsed) setSidebarState(true);
+
+        // Event saat tombol diklik
+        toggleBtn.addEventListener('click', () => {
+            const willCollapse = sidebar.classList.contains('w-72');
+            setSidebarState(willCollapse);
+            localStorage.setItem('lapisso_sidebar_collapsed', willCollapse);
+        });
+    });
+</script>

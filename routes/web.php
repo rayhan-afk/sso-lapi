@@ -3,64 +3,52 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Admin\ApplicationController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\LogController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Auth;
 
-/*
-|--------------------------------------------------------------------------
-| Entry Point & Redirects
-|--------------------------------------------------------------------------
-*/
-
+// Halaman awal (Langsung Redirect ke SSO)
 Route::get('/', function () {
-    return redirect()->route('dashboard');
+    // Jika user sudah login, langsung arahkan ke dashboard
+    if (Auth::check()) {
+        return redirect()->route('dashboard');
+    }
+    
+    // Jika belum login, langsung lempar otomatis ke Keycloak
+    return redirect('/auth/redirect');
+})->name('login'); // Nama 'login' WAJIB dipertahankan untuk middleware 'auth'
+
+// Rute Otentikasi SSO Keycloak
+Route::get('/auth/redirect', [AuthController::class, 'redirect']);
+Route::get('/auth/callback', [AuthController::class, 'callback']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// Rute Debug
+Route::get('/cek-sesi', function () {
+    if (Auth::check()) {
+        return "BERHASIL! Anda sedang login sebagai: " . Auth::user()->email;
+    }
+    return "GAGAL! Session kosong.";
 });
 
-// Route login standar yang akan melempar user ke Keycloak
-Route::get('/login', function () {
-    return redirect()->route('auth.redirect');
-})->name('login');
+// Grup Rute yang Wajib Login
+Route::middleware('auth')->group(function () {
+    
+    // Rute Dashboard Utama
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Rute Khusus Admin
+    Route::prefix('admin')->group(function () {
+        // Rute Spesifik di ATAS Resource
+        Route::patch('/users/{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+        Route::get('/users/sessions/monitoring', [UserController::class, 'activeSessions'])->name('users.sessions');
+        Route::delete('/users/sessions/{session_id}/kick', [UserController::class, 'forceLogout'])->name('users.force-logout');
+        
+        Route::resource('users', UserController::class);
+    });
 
-/*
-|--------------------------------------------------------------------------
-| Authentication (Keycloak OIDC)
-|--------------------------------------------------------------------------
-*/
-
-Route::controller(AuthController::class)->group(function () {
-    Route::get('/auth/redirect', 'redirect')->name('auth.redirect');
-    Route::get('/auth/callback', 'callback')->name('auth.callback');
-    Route::post('/logout', 'logout')->name('logout');
-});
-
-
-/*
-|--------------------------------------------------------------------------
-| Dashboard (SSO Portal)
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware('auth')
-    ->name('dashboard');
-
-
-/*
-|--------------------------------------------------------------------------
-| Admin Panel (Protected by Auth Middleware)
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware('auth')->prefix('admin')->group(function () {
-
-    Route::resource('applications', ApplicationController::class);
-    Route::resource('users', UserController::class);
-
-    /**
-     * Logs & Monitoring
-     */
-    Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
+    // Rute pengecekan berkala (Tanpa bungkus middleware tambahan karena sudah di dalam group 'auth')
+    Route::get('/ping-session-status', function () {
+        return response()->json(['status' => 'active']);
+    });
 
 });
