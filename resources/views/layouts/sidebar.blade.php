@@ -22,49 +22,41 @@
         </button>
     </div>
 
-        {{-- MENU --}}
-        <nav class="p-4 space-y-1.5 mt-2 overflow-y-auto">
-            
-            <p class="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-2">
-                Main Menu
-            </p>
+    {{-- MENU --}}
+    <nav class="flex-1 overflow-y-auto overflow-x-hidden py-6 px-4 space-y-1.5 custom-scrollbar">
+        
+        <p class="sidebar-text px-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4 mt-2 whitespace-nowrap">
+            Main Menu
+        </p>
 
-            @if(Auth::check() && Auth::user()->jabatan === 'admin')
+        @if(Auth::check() && Auth::user()->jabatan === 'admin')
 
-                {{-- Dashboard --}}
-                <a href="{{ route('dashboard') }}"
-                   class="{{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-700 border-blue-100' : 'text-slate-500 hover:bg-slate-50 hover:text-blue-600 border-transparent' }}
-                   flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors border">
-                    
-                    <x-heroicon-o-home class="w-5 h-5"/>
-                    System Overview
-                </a>
+            {{-- Dashboard --}}
+            <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-700 border-blue-100' : 'text-slate-500 hover:bg-slate-50 hover:text-blue-600 border-transparent' }} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors border">
+                <x-heroicon-o-home class="w-5 h-5 shrink-0"/>
+                <span class="sidebar-text whitespace-nowrap">System Overview</span>
+            </a>
 
-                {{-- Applications --}}
-                <a href="{{ route('applications.index') }}"
-                   class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-blue-600 rounded-xl text-sm font-medium transition-colors border border-transparent">
-                    
-                    <x-heroicon-o-squares-2x2 class="w-5 h-5"/>
-                    Application Management
-                </a>
+            {{-- Applications --}}
+            <a href="{{ route('applications.index') }}" class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-blue-600 rounded-xl text-sm font-medium transition-colors border border-transparent">
+                <x-heroicon-o-squares-2x2 class="w-5 h-5 shrink-0"/>
+                <span class="sidebar-text whitespace-nowrap">Application Management</span>
+            </a>
 
-                {{-- Users --}}
-                <a href="{{ route('users.index') }}"
-                   class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-blue-600 rounded-xl text-sm font-medium transition-colors border border-transparent">
-                    
-                    <x-heroicon-o-users class="w-5 h-5"/>
-                    User Management
-                </a>
+            {{-- Users --}}
+            <a href="{{ route('users.index') }}" class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-blue-600 rounded-xl text-sm font-medium transition-colors border border-transparent">
+                <x-heroicon-o-users class="w-5 h-5 shrink-0"/>
+                <span class="sidebar-text whitespace-nowrap">User Management</span>
+            </a>
 
-                {{-- Logs --}}
-                <a href="{{ route('logs.index') }}"
-                   class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-blue-600 rounded-xl text-sm font-medium transition-colors border border-transparent">
-                    
-                    <x-heroicon-o-document-text class="w-5 h-5"/>
-                    Activity Logs
-                </a>
+            {{-- Monitoring Log --}}
+            <a href="{{ route('log.activity') }}" class="{{ request()->routeIs('log.activity') ? 'bg-blue-50 text-blue-700 border-blue-100 font-semibold' : 'text-slate-500 hover:bg-slate-50 hover:text-blue-600 border-transparent font-medium' }} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors border">
+                <x-heroicon-o-document-text class="w-5 h-5 shrink-0"/>
+                <span class="sidebar-text whitespace-nowrap">Monitoring Log</span>
+            </a>
 
-                <a href="{{ route('users.sessions') }}" class="group relative flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all duration-300 {{ request()->routeIs('users.sessions') ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-md shadow-blue-500/25' : 'font-semibold text-slate-500 hover:text-blue-600 hover:bg-blue-50 hover:translate-x-1' }}">
+            {{-- Monitoring Sesi --}}
+            <a href="{{ route('users.sessions') }}" class="group relative flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all duration-300 {{ request()->routeIs('users.sessions') ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-md shadow-blue-500/25' : 'font-semibold text-slate-500 hover:text-blue-600 hover:bg-blue-50 hover:translate-x-1' }}">
                 <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('users.sessions') ? 'text-white' : 'text-slate-400 group-hover:text-blue-500 transition-colors' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -72,51 +64,40 @@
                 <span class="sidebar-text whitespace-nowrap">Monitoring Sesi</span>
             </a>
 
-            @else
+        @else
 
-                {{-- Dashboard --}}
-                <a href="{{ route('dashboard') }}"
-                   class="{{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-700 border-blue-100' : 'text-slate-500 hover:bg-slate-50 hover:text-blue-600 border-transparent' }}
-                   flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors border">
-                    
-                    <x-heroicon-o-home class="w-5 h-5"/>
-                    My Dashboard
-                </a>
+            {{-- Dashboard User --}}
+            <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-700 border-blue-100' : 'text-slate-500 hover:bg-slate-50 hover:text-blue-600 border-transparent' }} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors border">
+                <x-heroicon-o-home class="w-5 h-5 shrink-0"/>
+                <span class="sidebar-text whitespace-nowrap">My Dashboard</span>
+            </a>
 
-                {{-- Apps --}}
-                <a href="#"
-                   class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-blue-600 rounded-xl text-sm font-medium transition-colors border border-transparent">
-                    
-                    <x-heroicon-o-squares-2x2 class="w-5 h-5"/>
-                    Applications
-                </a>
+            {{-- User Apps --}}
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-blue-600 rounded-xl text-sm font-medium transition-colors border border-transparent">
+                <x-heroicon-o-squares-2x2 class="w-5 h-5 shrink-0"/>
+                <span class="sidebar-text whitespace-nowrap">Applications</span>
+            </a>
 
-                {{-- Favorites --}}
-                <a href="#"
-                   class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-blue-600 rounded-xl text-sm font-medium transition-colors border border-transparent">
-                    
-                    <x-heroicon-o-heart class="w-5 h-5"/>
-                    Favorites
-                </a>
+            {{-- Favorites --}}
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-blue-600 rounded-xl text-sm font-medium transition-colors border border-transparent">
+                <x-heroicon-o-heart class="w-5 h-5 shrink-0"/>
+                <span class="sidebar-text whitespace-nowrap">Favorites</span>
+            </a>
 
-                {{-- History --}}
-                <a href="#"
-                   class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-blue-600 rounded-xl text-sm font-medium transition-colors border border-transparent">
-                    
-                    <x-heroicon-o-clock class="w-5 h-5"/>
-                    Access History
-                </a>
+            {{-- History --}}
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-blue-600 rounded-xl text-sm font-medium transition-colors border border-transparent">
+                <x-heroicon-o-clock class="w-5 h-5 shrink-0"/>
+                <span class="sidebar-text whitespace-nowrap">Access History</span>
+            </a>
 
-            @endif
+        @endif
     </nav>
 
     {{-- FOOTER --}}
     <div class="p-4 border-t border-slate-100 bg-slate-50/50">
-        <a href="#"
-           class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-white hover:text-blue-600 rounded-xl text-sm font-medium transition-colors border border-transparent hover:border-slate-200 hover:shadow-sm">
-            
-            <x-heroicon-o-question-mark-circle class="w-5 h-5"/>
-            Help Center
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-white hover:text-blue-600 rounded-xl text-sm font-medium transition-colors border border-transparent hover:border-slate-200 hover:shadow-sm">
+            <x-heroicon-o-question-mark-circle class="w-5 h-5 shrink-0"/>
+            <span class="sidebar-text whitespace-nowrap">Help Center</span>
         </a>
     </div>
 </aside>

@@ -4,9 +4,12 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Admin\ApplicationController;
-use App\Http\Controllers\Admin\UserController; // Note: Ensure your controller is moved/namespaced to Admin if using this path
+
+// Pastikan namespace ini sesuai dengan lokasi asli file Controller Anda di folder App/Http/Controllers/
+use App\Http\Controllers\UserController; 
+use App\Http\Controllers\Admin\ApplicationController; 
 use App\Http\Controllers\LogController;
+use App\Http\Controllers\LogActivityController;
 
 /*
 |--------------------------------------------------------------------------
@@ -94,6 +97,9 @@ Route::middleware('auth')->group(function () {
 
         // --- Logs & Audit Trail ---
         Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
+        
+        // --- Activity Log (Monitoring Log) ---
+        Route::get('/log-activity', [LogActivityController::class, 'index'])->name('log.activity');
 
     });
 });
