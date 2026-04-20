@@ -6,6 +6,7 @@
     <title>@yield('title', 'LAPISSO Portal')</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -13,6 +14,7 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 h-screen flex overflow-hidden antialiased">
@@ -82,5 +84,31 @@
         
     </aside>
 
+    <script>
+    // Hanya jalankan jika user terdeteksi sedang login di sisi Laravel
+    @if(Auth::check())
+    function checkSession() {
+        // GANTI URL FETCH-NYA MENJADI INI:
+        fetch('/ping-session-status', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (response.redirected || response.status === 401 || response.status === 419) {
+                console.log("Sesi mati! Mengalihkan ke login...");
+                window.location.href = '/?error=session_terminated';
+            }
+        })
+        .catch(error => {
+            // Kita biarkan catch kosong atau hanya log agar tidak mengganggu user jika internet drop sesaat
+            console.warn('Ping sesi gagal, mencoba lagi nanti...');
+        });
+    }
+
+    // Jalankan setiap 10 detik
+    const sessionInterval = setInterval(checkSession, 10000);
+    @endif
+</script>
 </body>
 </html>

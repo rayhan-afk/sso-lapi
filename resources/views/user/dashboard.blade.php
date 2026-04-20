@@ -49,6 +49,7 @@
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pb-10">
+        
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all flex flex-col justify-between group">
             <div class="flex items-center gap-4 mb-6">
                 <div class="w-12 h-12 rounded-xl bg-slate-800 text-yellow-400 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
@@ -59,7 +60,7 @@
                     <p class="text-xs text-slate-500">Pemanis Aplikasi</p>
                 </div>
             </div>
-            <a href="#" class="w-full block text-center py-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold rounded-lg transition-colors text-sm border border-blue-100">Masuk</a>
+            <a href="http://127.0.0.1/dev.pemanis-lapi.com/index.php/sso/login" target="_blank" class="w-full block text-center py-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold rounded-lg transition-colors text-sm border border-blue-100">Masuk</a>
         </div>
         
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:emerald-300 transition-all flex flex-col justify-between group">
@@ -70,7 +71,7 @@
                     <p class="text-xs text-slate-500">Sistem E-Nomor</p>
                 </div>
             </div>
-            <a href="#" class="w-full block text-center py-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold rounded-lg transition-colors text-sm border border-blue-100">Masuk</a>
+            <a href="#" target="_blank" class="w-full block text-center py-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold rounded-lg transition-colors text-sm border border-blue-100">Masuk</a>
         </div>
 
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:blue-300 transition-all flex flex-col justify-between group">
@@ -83,7 +84,7 @@
                     <p class="text-xs text-slate-500">Keuangan & Pajak</p>
                 </div>
             </div>
-            <a href="#" class="w-full block text-center py-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold rounded-lg transition-colors text-sm border border-blue-100">Masuk</a>
+            <a href="#" target="_blank" class="w-full block text-center py-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold rounded-lg transition-colors text-sm border border-blue-100">Masuk</a>
         </div>
     </div>
 @endsection
