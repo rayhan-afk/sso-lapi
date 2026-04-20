@@ -22,21 +22,23 @@
         
         <p class="sidebar-text px-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4 mt-2 whitespace-nowrap">Menu Utama</p>
 
-        @if(Auth::check() && Auth::user()->role === 'admin')
-            <a href="{{ route('dashboard') }}" class="group relative flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all duration-300 {{ request()->routeIs('dashboard') ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-md shadow-blue-500/25' : 'font-semibold text-slate-500 hover:text-blue-600 hover:bg-blue-50 hover:translate-x-1' }}">
-                <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('dashboard') ? 'text-white' : 'text-slate-400 group-hover:text-blue-500 transition-colors' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                <span class="sidebar-text whitespace-nowrap">Overview System</span>
-            </a>
-            
-            <a href="#" class="group relative flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-300 text-slate-500 hover:text-blue-600 hover:bg-blue-50 hover:translate-x-1">
-                <svg class="w-5 h-5 shrink-0 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                <span class="sidebar-text whitespace-nowrap">Manajemen Aplikasi</span>
-            </a>
-            
-            <a href="{{ route('users.index') }}" class="group relative flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all duration-300 {{ request()->routeIs('users.index', 'users.create', 'users.edit') ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-md shadow-blue-500/25' : 'font-semibold text-slate-500 hover:text-blue-600 hover:bg-blue-50 hover:translate-x-1' }}">
-                <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('users.index', 'users.create', 'users.edit') ? 'text-white' : 'text-slate-400 group-hover:text-blue-500 transition-colors' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                <span class="sidebar-text whitespace-nowrap">Manajemen User</span>
-            </a>
+            @if(Auth::check() && Auth::user()->jabatan === 'admin')
+                <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-700 border-blue-100' : 'text-slate-500 hover:bg-slate-50 hover:text-blue-600 border-transparent' }} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors border">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Overview System
+                </a>
+                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-blue-600 rounded-xl text-sm font-medium transition-colors border border-transparent">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    Manajemen Aplikasi
+                </a>
+                <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-blue-600 rounded-xl text-sm font-medium transition-colors border border-transparent">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    Manajemen User
+                </a>
+                <a href="{{ route('log.activity') }}" class="{{ request()->routeIs('log.activity') ? 'bg-blue-50 text-blue-700 border-blue-100 font-semibold' : 'text-slate-500 hover:bg-slate-50 hover:text-blue-600 border-transparent font-medium' }} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors border">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Monitoring Log
+                </a>
 
             <a href="{{ route('users.sessions') }}" class="group relative flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all duration-300 {{ request()->routeIs('users.sessions') ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-md shadow-blue-500/25' : 'font-semibold text-slate-500 hover:text-blue-600 hover:bg-blue-50 hover:translate-x-1' }}">
                 <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('users.sessions') ? 'text-white' : 'text-slate-400 group-hover:text-blue-500 transition-colors' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -5,6 +5,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\LogActivityController;
+
 
 // Halaman awal (Langsung Redirect ke SSO)
 Route::get('/', function () {
@@ -52,3 +54,6 @@ Route::middleware('auth')->group(function () {
     });
 
 });
+// Rute Dashboard Admin(Mengarah ke View)
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('auth')->name('dashboard');
+Route::get('/log-activity', [LogActivityController::class, 'index'])->name('log.activity');
