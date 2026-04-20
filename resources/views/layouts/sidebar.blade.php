@@ -64,6 +64,14 @@
                     Activity Logs
                 </a>
 
+                <a href="{{ route('users.sessions') }}" class="group relative flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all duration-300 {{ request()->routeIs('users.sessions') ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-md shadow-blue-500/25' : 'font-semibold text-slate-500 hover:text-blue-600 hover:bg-blue-50 hover:translate-x-1' }}">
+                <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('users.sessions') ? 'text-white' : 'text-slate-400 group-hover:text-blue-500 transition-colors' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+                <span class="sidebar-text whitespace-nowrap">Monitoring Sesi</span>
+            </a>
+
             @else
 
                 {{-- Dashboard --}}
