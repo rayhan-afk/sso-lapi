@@ -3,115 +3,122 @@
 @section('title', 'Edit User | LAPISSO')
 
 @section('content')
-    <div class="mb-8 flex justify-between items-end">
-        <div>
-            <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Edit Pengguna</h1>
-            <p class="text-slate-500 mt-1">Perbarui data, role, atau ubah hak akses pengguna ini.</p>
-        </div>
-        <div class="text-right">
-            <a href="{{ route('users.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-xl shadow-sm transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Kembali
-            </a>
-        </div>
+<div class="mb-8 flex items-center gap-4">
+    <a href="{{ route('users.index') }}" class="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+        <x-heroicon-o-arrow-left class="w-5 h-5"/>
+    </a>
+    <div>
+        <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Edit User</h1>
+        <p class="text-slate-500 mt-1">Perbarui informasi profil dan hak akses aplikasi untuk <strong>{{ $user->nama }}</strong>.</p>
     </div>
+</div>
 
-    @if(session('error'))
-        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-800 shadow-sm">
-            <svg class="w-5 h-5 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <p class="text-sm font-semibold">{{ session('error') }}</p>
-        </div>
-    @endif
+<form action="{{ route('users.update', $user->id) }}" method="POST">
+    @csrf
+    @method('PUT')
 
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden max-w-3xl">
-        <div class="bg-amber-50/50 border-b border-amber-100 p-6 flex gap-4">
-            <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </div>
-            <div>
-                <h3 class="text-sm font-bold text-amber-900">Mode Edit SSO</h3>
-                <p class="text-sm text-amber-700 mt-1">Perubahan pada email, status aktif, atau Role Administrator akan disinkronkan langsung ke server Keycloak.</p>
-            </div>
-        </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {{-- SISI KIRI: FORM DATA UTAMA --}}
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+                <h3 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                    <x-heroicon-o-user-circle class="w-6 h-6 text-blue-600"/>
+                    Informasi Profil
+                </h3>
 
-        <form action="{{ route('users.update', $user->id) }}" method="POST" class="p-6">
-            @csrf
-            @method('PUT')
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- Nama --}}
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold text-slate-700">Nama Lengkap</label>
+                        <input type="text" name="name" value="{{ old('name', $user->nama) }}" 
+                               class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all" required>
+                    </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                    <label for="nama" class="block text-sm font-bold text-slate-700 mb-1.5">Nama Lengkap</label>
-                    <input type="text" name="nama" id="nama" value="{{ old('nama', $user->nama) }}" required
-                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all @error('nama') border-red-500 bg-red-50 @enderror">
-                    @error('nama')
-                        <p class="text-red-500 text-xs font-medium mt-1.5">{{ $message }}</p>
-                    @enderror
+                    {{-- Email (Read Only karena ID di Keycloak pakai Email) --}}
+                    <div class="space-y-2 opacity-70">
+                        <label class="text-sm font-bold text-slate-700">Alamat Email (Permanen)</label>
+                        <input type="email" value="{{ $user->email }}" class="w-full px-4 py-2.5 rounded-xl border border-slate-100 bg-slate-50 cursor-not-allowed outline-none" readonly>
+                        <p class="text-[10px] text-slate-400 font-medium italic">*Email tidak dapat diubah untuk menjaga sinkronisasi SSO.</p>
+                    </div>
+
+                    {{-- Password Baru --}}
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold text-slate-700">Password Baru (Opsional)</label>
+                        <input type="password" name="password" placeholder="Kosongkan jika tidak ingin diubah"
+                               class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all">
+                    </div>
+
+                    {{-- Role/Jabatan --}}
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold text-slate-700">Jabatan / Role</label>
+                        <select name="role" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all">
+                            <option value="user" {{ $user->jabatan == 'user' ? 'selected' : '' }}>User (Karyawan)</option>
+                            <option value="admin" {{ $user->jabatan == 'admin' ? 'selected' : '' }}>Admin (Pengelola)</option>
+                        </select>
+                    </div>
                 </div>
-
-                <div>
-                    <label for="email" class="block text-sm font-bold text-slate-700 mb-1.5">Email (Username SSO)</label>
-                    <input type="email" name="email" id="email" value="{{ old('email', $user->email) }}" required
-                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all @error('email') border-red-500 bg-red-50 @enderror">
-                    @error('email')
-                        <p class="text-red-500 text-xs font-medium mt-1.5">{{ $message }}</p>
-                    @enderror
-                </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {{-- AKSES APLIKASI --}}
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+                <h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
+                    <x-heroicon-o-key class="w-6 h-6 text-blue-600"/>
+                    Izin Akses Aplikasi
+                </h3>
+                <p class="text-slate-500 text-sm mb-6">Pilih aplikasi mana saja yang boleh diakses oleh user ini.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @foreach($applications as $app)
+                    <label class="relative flex items-center gap-4 p-4 rounded-xl border border-slate-100 bg-slate-50/50 cursor-pointer hover:bg-blue-50 transition-colors group">
+                        <input type="checkbox" name="apps[]" value="{{ $app->id }}" 
+                               {{ $user->applications->contains($app->id) ? 'checked' : '' }}
+                               class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-slate-900 text-sm group-hover:text-blue-700">{{ $app->app_name }}</span>
+                            <span class="text-[11px] text-slate-400 font-mono">{{ $app->client_id }}</span>
+                        </div>
+                    </label>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        {{-- SISI KANAN: STATUS & SUBMIT --}}
+        <div class="lg:col-span-1 space-y-6">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                <h3 class="font-bold text-slate-900 mb-4 text-sm uppercase tracking-wider text-center">Status Akun</h3>
                 
-                <div>
-                    <label for="jabatan" class="block text-sm font-bold text-slate-700 mb-1.5">Posisi Pekerjaan</label>
-                    <input type="text" name="jabatan" id="jabatan" value="{{ old('jabatan', $user->jabatan) }}" required
-                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all @error('jabatan') border-red-500 bg-red-50 @enderror">
-                    @error('jabatan')
-                        <p class="text-red-500 text-xs font-medium mt-1.5">{{ $message }}</p>
-                    @enderror
+                <div class="flex flex-col gap-3">
+                    <label class="flex items-center justify-between p-3 rounded-xl border border-emerald-100 bg-emerald-50/50 cursor-pointer">
+                        <div class="flex items-center gap-3">
+                            <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="text-sm font-bold text-emerald-700">Aktifkan Akun</span>
+                        </div>
+                        <input type="radio" name="status" value="active" {{ $user->is_active ? 'checked' : '' }} class="text-emerald-600 focus:ring-emerald-500">
+                    </label>
+
+                    <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer">
+                        <div class="flex items-center gap-3">
+                            <span class="w-3 h-3 rounded-full bg-slate-300"></span>
+                            <span class="text-sm font-bold text-slate-600">Nonaktifkan Akun</span>
+                        </div>
+                        <input type="radio" name="status" value="disabled" {{ !$user->is_active ? 'checked' : '' }} class="text-slate-600 focus:ring-slate-500">
+                    </label>
                 </div>
 
-                <div>
-                    <label for="role" class="block text-sm font-bold text-slate-700 mb-1.5">Hak Akses Sistem</label>
-                    <select name="role" id="role" required
-                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all cursor-pointer @error('role') border-red-500 bg-red-50 @enderror">
-                        <option value="user" {{ old('role', $user->role) == 'user' ? 'selected' : '' }}>User Biasa</option>
-                        <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Administrator SSO</option>
-                    </select>
-                    @error('role')
-                        <p class="text-red-500 text-xs font-medium mt-1.5">{{ $message }}</p>
-                    @enderror
-                </div>
+                <hr class="my-6 border-slate-100">
 
-                <div>
-                    <label for="password" class="block text-sm font-bold text-slate-700 mb-1.5">Password Baru <span class="text-slate-400 font-normal">(Opsional)</span></label>
-                    <input type="password" name="password" id="password" minlength="8" placeholder="Kosongkan jika tidak ubah"
-                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all @error('password') border-red-500 bg-red-50 @enderror">
-                    @error('password')
-                        <p class="text-red-500 text-xs font-medium mt-1.5">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
-
-            <div class="mb-8 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                <label class="flex items-center cursor-pointer">
-                    <div class="relative flex items-center">
-                        <input type="checkbox" name="is_active" id="is_active" value="1" {{ $user->is_active ? 'checked' : '' }} class="peer sr-only">
-                        <div class="h-6 w-11 bg-slate-300 rounded-full peer-checked:bg-emerald-500 transition-colors"></div>
-                        <div class="absolute left-1 top-1 h-4 w-4 bg-white rounded-full transition-transform peer-checked:translate-x-5 shadow-sm"></div>
-                    </div>
-                    <div class="ml-3">
-                        <span class="block text-sm font-bold text-slate-800">Status Akun Aktif</span>
-                        <span class="block text-xs text-slate-500 mt-0.5">Mematikan status ini akan memblokir user dari aplikasi SSO Keycloak.</span>
-                    </div>
-                </label>
-            </div>
-
-            <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
-                <a href="{{ route('users.index') }}" class="px-6 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors">Batal</a>
-                <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-sm shadow-blue-200 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                <button type="submit" class="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center justify-center gap-2">
+                    <x-heroicon-o-check-circle class="w-5 h-5"/>
                     Simpan Perubahan
                 </button>
+
+                <p class="text-[11px] text-slate-400 text-center mt-4 px-4 text-balance">
+                    Perubahan status akan langsung berdampak pada kemampuan user untuk login di Keycloak.
+                </p>
             </div>
-        </form>
+        </div>
     </div>
+</form>
 @endsection
