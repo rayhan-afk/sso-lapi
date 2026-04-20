@@ -6,12 +6,21 @@ use Illuminate\Database\Eloquent\Model;
 
 class Application extends Model
 {
-    // Jika nama tabel di database bukan 'applications', aktifkan baris di bawah ini:
-    // protected $table = 'nama_tabel_aplikasi_anda';
+    public $timestamps = false;
 
-    protected $guarded = [];
+    protected $table = 'applications';
 
-    // Relasi balik (opsional): Satu aplikasi bisa memiliki banyak log aktivitas
+    protected $fillable = [
+        'app_name', 
+        'client_id', 
+        'keycloak_client_uuid',
+        'client_secret',
+        'url_aplikasi', 
+        'icon_aplikasi', 
+        'status'
+    ];
+
+    // Relasi: satu aplikasi punya banyak log
     public function logs()
     {
         return $this->hasMany(LogActivity::class, 'app_id');

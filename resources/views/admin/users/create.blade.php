@@ -1,116 +1,125 @@
+<!-- resources\views\admin\users\create.blade.php -->
 @extends('layouts.app')
 
 @section('title', 'Tambah User | LAPISSO')
 
 @section('content')
-    <div class="mb-8 flex justify-between items-end">
-        <div>
-            <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Tambah Pengguna Baru</h1>
-            <p class="text-slate-500 mt-1">Buat akun untuk akses ke ekosistem LAPI dan SSO Keycloak.</p>
-        </div>
-        <div class="text-right">
-            <a href="{{ route('users.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-xl shadow-sm transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Kembali
-            </a>
-        </div>
-    </div>
 
-    @if(session('error'))
-        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-800 shadow-sm">
-            <svg class="w-5 h-5 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <p class="text-sm font-semibold">{{ session('error') }}</p>
-        </div>
-    @endif
+<div class="mb-8">
+    <a href="{{ route('users.index') }}"
+       class="text-sm text-blue-600 hover:underline flex items-center gap-2 mb-4">
+        <x-heroicon-o-arrow-left class="w-4 h-4"/>
+        Kembali ke Manajemen User
+    </a>
 
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden max-w-3xl">
-        <div class="bg-blue-50/50 border-b border-blue-100 p-6 flex gap-4">
-            <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </div>
-            <div>
-                <h3 class="text-sm font-bold text-blue-900">Sinkronisasi Identitas Terpusat</h3>
-                <p class="text-sm text-blue-700 mt-1">Akun dan Role yang dibuat di sini akan otomatis terdaftar di Database lokal dan server otentikasi Keycloak.</p>
-            </div>
-        </div>
+    <h1 class="text-3xl font-bold text-slate-900 tracking-tight">
+        Tambah User
+    </h1>
+    <p class="text-slate-500 mt-1">
+        Tambahkan pengguna baru dan atur izin akses aplikasi SSO.
+    </p>
+</div>
 
-        <form action="{{ route('users.store') }}" method="POST" class="p-6">
-            @csrf
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 max-w-3xl">
+    <form method="POST" action="{{ route('users.store') }}">
+        @csrf
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                    <label for="nama" class="block text-sm font-bold text-slate-700 mb-1.5">Nama Lengkap</label>
-                    <input type="text" name="nama" id="nama" value="{{ old('nama') }}" required placeholder="Contoh: Budi Santoso"
-                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all @error('nama') border-red-500 bg-red-50 @enderror">
-                    @error('nama')
-                        <p class="text-red-500 text-xs font-medium mt-1.5">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
-                    <label for="email" class="block text-sm font-bold text-slate-700 mb-1.5">Email (Username SSO)</label>
-                    <input type="email" name="email" id="email" value="{{ old('email') }}" required placeholder="budi@lapi.com"
-                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all @error('email') border-red-500 bg-red-50 @enderror">
-                    @error('email')
-                        <p class="text-red-500 text-xs font-medium mt-1.5">{{ $message }}</p>
-                    @enderror
-                </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {{-- NAMA --}}
+            <div class="mb-2">
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Lengkap</label>
+                <input type="text" name="name" value="{{ old('name') }}" required placeholder="Contoh: Kinan Ann"
+                    class="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                
-                <div>
-                    <label for="jabatan" class="block text-sm font-bold text-slate-700 mb-1.5">Posisi Pekerjaan</label>
-                    <input type="text" name="jabatan" id="jabatan" value="{{ old('jabatan') }}" required placeholder="Contoh: Staff IT, Direktur"
-                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all @error('jabatan') border-red-500 bg-red-50 @enderror">
-                    @error('jabatan')
-                        <p class="text-red-500 text-xs font-medium mt-1.5">{{ $message }}</p>
-                    @enderror
-                </div>
+            {{-- EMAIL --}}
+            <div class="mb-2">
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                <input type="email" name="email" value="{{ old('email') }}" required placeholder="user@email.com"
+                    class="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+        </div>
 
-                <div>
-                    <label for="role" class="block text-sm font-bold text-slate-700 mb-1.5">Hak Akses Sistem</label>
-                    <select name="role" id="role" required
-                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all cursor-pointer @error('role') border-red-500 bg-red-50 @enderror">
-                        <option value="user" {{ old('role') == 'user' ? 'selected' : '' }}>User Biasa</option>
-                        <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Administrator SSO</option>
-                    </select>
-                    @error('role')
-                        <p class="text-red-500 text-xs font-medium mt-1.5">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
-                    <label for="password" class="block text-sm font-bold text-slate-700 mb-1.5">Password Awal</label>
-                    <input type="password" name="password" id="password" required minlength="8" placeholder="Minimal 8 karakter"
-                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all @error('password') border-red-500 bg-red-50 @enderror">
-                    @error('password')
-                        <p class="text-red-500 text-xs font-medium mt-1.5">{{ $message }}</p>
-                    @enderror
-                </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            {{-- PASSWORD --}}
+            <div class="mb-2">
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Password</label>
+                <input type="password" name="password" required placeholder="Minimal 8 karakter"
+                    class="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
             </div>
 
-            <div class="mb-8 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                <label class="flex items-center cursor-pointer">
-                    <div class="relative flex items-center">
-                        <input type="checkbox" name="is_active" id="is_active" value="1" checked class="peer sr-only">
-                        <div class="h-6 w-11 bg-slate-300 rounded-full peer-checked:bg-emerald-500 transition-colors"></div>
-                        <div class="absolute left-1 top-1 h-4 w-4 bg-white rounded-full transition-transform peer-checked:translate-x-5 shadow-sm"></div>
+            {{-- ROLE --}}
+            <div class="mb-2">
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Role (Jabatan)</label>
+                <select name="role" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <option value="user" {{ old('role') == 'user' ? 'selected' : '' }}>User</option>
+                    <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                </select>
+            </div>
+        </div>
+
+        {{-- STATUS --}}
+        <div class="mt-6 mb-8">
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Status Akun</label>
+            <select name="status" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <option value="active">Active</option>
+                <option value="disabled">Disabled</option>
+            </select>
+        </div>
+
+        <hr class="border-slate-100 my-8">
+
+        {{-- IZIN AKSES APLIKASI --}}
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <label class="text-sm font-bold text-slate-800">Izin Akses Aplikasi</label>
+                <span class="text-xs text-slate-500 italic">* Pilih aplikasi yang boleh diakses user ini</span>
+            </div>
+            
+            <div class="grid grid-cols-1 gap-3">
+                @foreach($applications as $app)
+                <label class="relative flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-blue-50/50 transition-all group">
+                    <input type="checkbox" name="apps[]" value="{{ $app->id }}" 
+                        class="w-5 h-5 text-blue-600 border-slate-300 rounded focus:ring-blue-500">
+                    
+                    <div class="ml-4">
+                        <span class="block text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
+                            {{ $app->nama_aplikasi ?? $app->app_name }}
+                        </span>
+                        <span class="block text-xs text-slate-500">
+                            Client ID: <span class="font-mono text-blue-600">{{ $app->client_id }}</span>
+                        </span>
                     </div>
-                    <div class="ml-3">
-                        <span class="block text-sm font-bold text-slate-800">Aktifkan Akun</span>
-                        <span class="block text-xs text-slate-500 mt-0.5">Pengguna dapat langsung login setelah akun dibuat.</span>
+
+                    <div class="ml-auto">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500">
+                            OIDC Client
+                        </span>
                     </div>
                 </label>
+                @endforeach
             </div>
+            
+            @if($applications->isEmpty())
+                <div class="p-4 bg-amber-50 border border-amber-100 rounded-xl text-amber-700 text-sm">
+                    Belum ada aplikasi yang terdaftar. <a href="{{ route('applications.create') }}" class="underline font-bold">Tambah aplikasi dulu</a>.
+                </div>
+            @endif
+        </div>
 
-            <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
-                <a href="{{ route('users.index') }}" class="px-6 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors">Batal</a>
-                <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-sm shadow-blue-200 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    Simpan Pengguna
-                </button>
-            </div>
-        </form>
-    </div>
+        {{-- BUTTON ACTIONS --}}
+        <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
+            <a href="{{ route('users.index') }}"
+                class="px-5 py-2.5 text-sm font-semibold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
+                Batal
+            </a>
+
+            <button type="submit"
+                class="px-6 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 shadow-md shadow-blue-200 transition-all active:scale-95">
+                Simpan User & Sinkron Keycloak
+            </button>
+        </div>
+    </form>
+</div>
+
 @endsection
