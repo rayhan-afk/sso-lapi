@@ -1,9 +1,17 @@
-<!-- resources\views\admin\users\create.blade.php -->
 @extends('layouts.app')
 
 @section('title', 'Tambah User | LAPISSO')
 
 @section('content')
+@if ($errors->any())
+    <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl">
+        <ul class="list-disc pl-5 text-sm">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 
 <div class="mb-8">
     <a href="{{ route('users.index') }}"
@@ -32,10 +40,10 @@
                     class="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
             </div>
 
-            {{-- EMAIL --}}
+            {{-- EMAIL (BISA DIKETIK & TIDAK READONLY) --}}
             <div class="mb-2">
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Email</label>
-                <input type="email" name="email" value="{{ old('email') }}" required placeholder="user@email.com"
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Alamat Email</label>
+                <input type="email" name="email" value="{{ old('email') }}" required placeholder="Contoh: email@perusahaan.com"
                     class="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
             </div>
         </div>
@@ -121,5 +129,4 @@
         </div>
     </form>
 </div>
-
 @endsection

@@ -43,7 +43,8 @@
 
     <input
         type="text"
-        name="name"
+        name="app_name"
+        value="{{ old('app_name') }}"
         required
         placeholder="Contoh: Portal Akademik"
         class="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -62,7 +63,8 @@
 
     <input
         type="text"
-        name="redirect_uri"
+        name="url_aplikasi"
+        value="{{ old('url_aplikasi') }}"
         required
         placeholder="https://example.com/callback"
         class="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"

@@ -41,8 +41,8 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'     => 'required|string|max:150',  // dari branch
-            'nama'     => 'sometimes|string|max:150', // fallback dari main
+            'name'     => 'sometimes|string|max:150',  
+            'nama'     => 'sometimes|string|max:150', 
             'email'    => 'required|email|unique:users,email',
             'password' => 'required|min:8',
             'jabatan'  => 'sometimes|string|max:100',
@@ -52,55 +52,23 @@ class UserController extends Controller
             'apps'     => 'nullable|array',
         ]);
 
-        // Normalisasi nama & status agar kompatibel dengan dua format form
-        $nama     = $request->name ?? $request->nama;
-        $isActive = $request->has('status')
-            ? ($request->status === 'active' ? 1 : 0)
-            : ($request->has('is_active') ? 1 : 0);
+        $nama = $request->name ?? $request->nama;
+        $isActive = $request->has('status') ? ($request->status === 'active' ? 1 : 0) : ($request->has('is_active') ? 1 : 0);
 
         DB::beginTransaction();
 
         try {
-            $token   = $this->getKeycloakAdminToken();
-            $baseUrl = env('KEYCLOAK_BASE_URL');
-            $realm   = env('KEYCLOAK_REALM');
+            // 1. Buat User di Keycloak & Ambil UUID aslinya
+            $keycloakUserId = $this->createUserInKeycloak(
+                $request->email,
+                $nama,
+                $request->password,
+                $isActive
+            );
 
-            // 1. Buat User di Keycloak
-            $payload = [
-                'username'      => $request->email,
-                'email'         => $request->email,
-                'firstName'     => $nama,
-                'enabled'       => (bool) $isActive,
-                'emailVerified' => true,
-                'credentials'   => [
-                    [
-                        'type'      => 'password',
-                        'value'     => $request->password,
-                        'temporary' => false,
-                    ]
-                ],
-            ];
-
-            $userResponse = Http::withToken($token)
-                ->post("{$baseUrl}/admin/realms/{$realm}/users", $payload);
-
-            if ($userResponse->status() === 409) {
-                throw new \Exception('Email tersebut sudah terdaftar di dalam sistem SSO Keycloak.');
-            } elseif ($userResponse->failed()) {
-                throw new \Exception('Keycloak Store Error: ' . $userResponse->body());
-            }
-
-            // 2. Ambil UUID yang digenerate Keycloak
-            $search = Http::withToken($token)
-                ->get("{$baseUrl}/admin/realms/{$realm}/users", [
-                    'email' => $request->email,
-                    'exact' => true,
-                ])->json();
-            $uuid = $search[0]['id'];
-
-            // 3. Simpan ke Database Lokal
+            // 2. Simpan ke Database Lokal (GUNAKAN UUID DARI KEYCLOAK!)
             $user = User::create([
-                'id'        => $uuid,
+                'id'        => $keycloakUserId,
                 'nama'      => $nama,
                 'email'     => $request->email,
                 'password'  => Hash::make($request->password),
@@ -109,13 +77,14 @@ class UserController extends Controller
                 'is_active' => $isActive,
             ]);
 
-            // 4. Sinkronisasi Role Realm Admin di Keycloak (dari main)
+            // 3. Sinkronisasi Role Admin
             $this->syncKeycloakAdminRole($request->email, $request->role);
 
-            // 5. Sinkronisasi Akses Aplikasi / Client Roles (dari branch)
-            if ($request->has('apps')) {
-                $user->applications()->sync($request->apps);
-                $this->syncKeycloakClientRoles($uuid, $request->apps);
+            // 4. Sinkronisasi Akses Aplikasi (Apps)
+            $selectedApps = $request->apps ?? [];
+            if (!empty($selectedApps)) {
+                $user->applications()->sync($selectedApps);
+                $this->syncKeycloakClientRoles($keycloakUserId, $selectedApps);
             }
 
             DB::commit();
@@ -125,7 +94,7 @@ class UserController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'Gagal: ' . $e->getMessage());
+            dd("ERROR TAMBAH USER: " . $e->getMessage() . " di baris " . $e->getLine());
         }
     }
 
@@ -155,10 +124,10 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
+        // 1. VALIDASI (KITA HAPUS VALIDASI EMAIL KARENA PERMANEN)
         $request->validate([
             'name'     => 'sometimes|string|max:150',
             'nama'     => 'sometimes|string|max:150',
-            'email'    => 'required|email|unique:users,email,' . $user->id,
             'jabatan'  => 'sometimes|string|max:100',
             'role'     => 'required|in:admin,user',
             'status'   => 'sometimes|in:active,disabled',
@@ -170,35 +139,28 @@ class UserController extends Controller
         $isActive = $request->has('status')
             ? ($request->status === 'active' ? 1 : 0)
             : ($request->has('is_active') ? 1 : 0);
-        $oldEmail = $user->email;
+            
+        // 2. GUNAKAN EMAIL DARI DATABASE SAJA AGAR AMAN
+        $userEmail = $user->email;
 
         DB::beginTransaction();
 
         try {
             $token   = $this->getKeycloakAdminToken();
-            $baseUrl = env('KEYCLOAK_BASE_URL');
+            $baseUrl = env('KEYCLOAK_SERVER_URL');
             $realm   = env('KEYCLOAK_REALM');
 
-            // 1. Update Profile & Status di Keycloak
-            $updatePayload = [
-                'username'  => $request->email,
-                'email'     => $request->email,
-                'firstName' => $nama,
-                'enabled'   => (bool) $isActive,
-            ];
-
-            // Jika email berubah, cari user lama dulu lewat email lama
-            $this->updateUserInKeycloak(
-                $oldEmail,
-                $request->email,
+            // 3. Update Profile & Status di Keycloak & Ambil UUID Asli
+            $keycloakUserId = $this->updateUserInKeycloak(
+                $userEmail, // Wajib pakai email lama untuk pencarian awal
+                $userEmail, // Email baru (tetap sama karena permanen)
                 $nama,
                 $request->password,
                 $isActive
             );
 
-            // 2. Update Database Lokal
+            // 4. Update Database Lokal (Email tidak diubah)
             $user->nama      = $nama;
-            $user->email     = $request->email;
             $user->jabatan   = $request->jabatan ?? $request->role;
             $user->role      = $request->role;
             $user->is_active = $isActive;
@@ -209,16 +171,16 @@ class UserController extends Controller
 
             $user->save();
 
-            // 3. Sinkronisasi Role Realm Admin di Keycloak (dari main)
-            $this->syncKeycloakAdminRole($request->email, $request->role);
+            // 5. Sinkronisasi Role Realm Admin di Keycloak
+            $this->syncKeycloakAdminRole($userEmail, $request->role);
 
-            // 4. Reset lalu Sinkronisasi Client Roles Keycloak (dari branch)
-            $this->clearAllKeycloakClientRoles($id);
+            // 6. Reset lalu Sinkronisasi Client Roles Keycloak
+            $this->clearAllKeycloakClientRoles($keycloakUserId);
             $selectedApps = $request->apps ?? [];
             $user->applications()->sync($selectedApps);
 
             if (!empty($selectedApps)) {
-                $this->syncKeycloakClientRoles($id, $selectedApps);
+                $this->syncKeycloakClientRoles($keycloakUserId, $selectedApps);
             }
 
             DB::commit();
@@ -228,7 +190,8 @@ class UserController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'Gagal update user: ' . $e->getMessage());
+            // JIKA MASIH GAGAL DI KEYCLOAK, LAYAR HITAM INI PASTI MUNCUL!
+            dd("ERROR UPDATE USER: " . $e->getMessage() . " di baris " . $e->getLine());
         }
     }
 
@@ -243,7 +206,7 @@ class UserController extends Controller
 
         try {
             $token   = $this->getKeycloakAdminToken();
-            $baseUrl = env('KEYCLOAK_BASE_URL');
+            $baseUrl = env('KEYCLOAK_SERVER_URL');
             $realm   = env('KEYCLOAK_REALM');
 
             // 1. Hapus di Keycloak
@@ -309,7 +272,7 @@ class UserController extends Controller
      */
     public function activeSessions()
     {
-        $baseUrl = env('KEYCLOAK_BASE_URL');
+        $baseUrl = env('KEYCLOAK_SERVER_URL');
         $realm   = env('KEYCLOAK_REALM');
         $token   = $this->getKeycloakAdminToken();
 
@@ -369,7 +332,7 @@ class UserController extends Controller
      */
     public function forceLogout($sessionId)
     {
-        $baseUrl = env('KEYCLOAK_BASE_URL');
+        $baseUrl = env('KEYCLOAK_SERVER_URL');
         $realm   = env('KEYCLOAK_REALM');
         $token   = $this->getKeycloakAdminToken();
 
@@ -395,7 +358,7 @@ class UserController extends Controller
      */
     private function getKeycloakAdminToken(): string
     {
-        $baseUrl = env('KEYCLOAK_BASE_URL');
+        $baseUrl = env('KEYCLOAK_SERVER_URL'); 
         $realm   = env('KEYCLOAK_REALM');
 
         // Strategi 1: Client Credentials (dipakai oleh controller main)
@@ -439,22 +402,26 @@ class UserController extends Controller
     /**
      * Update data user di Keycloak (cari lewat email lama).
      */
-    private function updateUserInKeycloak($oldEmail, $newEmail, $name, $password, $isActive): void
+    private function updateUserInKeycloak($oldEmail, $newEmail, $name, $password, $isActive): string
     {
-        $baseUrl = env('KEYCLOAK_BASE_URL');
+        $baseUrl = env('KEYCLOAK_SERVER_URL');
         $realm   = env('KEYCLOAK_REALM');
         $token   = $this->getKeycloakAdminToken();
 
-        $searchResponse = Http::withToken($token)->get("{$baseUrl}/admin/realms/{$realm}/users", [
+        // 1. CARI UUID KEYCLOAK ASLI BERDASARKAN EMAIL LAMA
+        $userResponse = Http::withToken($token)->get("{$baseUrl}/admin/realms/{$realm}/users", [
             'email' => $oldEmail,
             'exact' => true,
         ]);
 
-        $users = $searchResponse->json();
-        if (empty($users)) return; // User tidak ada di Keycloak, lewati
+        $users = $userResponse->json();
+        if (empty($users)) {
+            throw new \Exception("User Keycloak dengan email {$oldEmail} tidak ditemukan.");
+        }
 
-        $keycloakUserId = $users[0]['id'];
+        $keycloakUserId = $users[0]['id']; // Ini UUID Keycloak Asli!
 
+        // 2. LAKUKAN UPDATE MENGGUNAKAN UUID ASLI TERSEBUT
         $updateData = [
             'username'  => $newEmail,
             'email'     => $newEmail,
@@ -476,8 +443,57 @@ class UserController extends Controller
             ->put("{$baseUrl}/admin/realms/{$realm}/users/{$keycloakUserId}", $updateData);
 
         if ($updateResponse->status() !== 204) {
-            throw new \Exception('Gagal update data di Keycloak.');
+            throw new \Exception('Gagal update data di Keycloak. Pesan: ' . $updateResponse->body());
         }
+
+        return $keycloakUserId; // Kembalikan ID asli untuk keperluan sync role
+    }
+
+    /**
+     * Buat data user baru di Keycloak & kembalikan UUID-nya.
+     */
+    private function createUserInKeycloak($email, $name, $password, $isActive): string
+    {
+        $baseUrl = env('KEYCLOAK_SERVER_URL');
+        $realm   = env('KEYCLOAK_REALM');
+        $token   = $this->getKeycloakAdminToken();
+
+        // Data User Baru
+        $userData = [
+            'username'  => $email,
+            'email'     => $email,
+            'firstName' => $name,
+            'enabled'   => (bool) $isActive,
+            'emailVerified' => true,
+            'credentials' => [
+                [
+                    'type'      => 'password',
+                    'value'     => $password,
+                    'temporary' => false,
+                ]
+            ]
+        ];
+
+        // 1. Eksekusi API Buat User
+        $createResponse = Http::withToken($token)
+            ->post("{$baseUrl}/admin/realms/{$realm}/users", $userData);
+
+        if ($createResponse->status() !== 201 && $createResponse->status() !== 409) {
+            throw new \Exception('Gagal membuat user di Keycloak. Error: ' . $createResponse->body());
+        }
+
+        // 2. Ambil UUID User yang baru dibuat
+        $userResponse = Http::withToken($token)->get("{$baseUrl}/admin/realms/{$realm}/users", [
+            'email' => $email,
+            'exact' => true,
+        ]);
+
+        $users = $userResponse->json();
+        if (empty($users)) {
+            throw new \Exception("User berhasil dibuat di Keycloak, tapi gagal mengambil UUID.");
+        }
+
+        return $users[0]['id'];
     }
 
     /**
@@ -485,28 +501,27 @@ class UserController extends Controller
      */
     private function updateUserStatusInKeycloak($email, $isActive): void
     {
-        $baseUrl = env('KEYCLOAK_BASE_URL');
+        $baseUrl = env('KEYCLOAK_SERVER_URL');
         $realm   = env('KEYCLOAK_REALM');
         $token   = $this->getKeycloakAdminToken();
 
-        $searchResponse = Http::withToken($token)->get("{$baseUrl}/admin/realms/{$realm}/users", [
+        $userResponse = Http::withToken($token)->get("{$baseUrl}/admin/realms/{$realm}/users", [
             'email' => $email,
             'exact' => true,
         ]);
 
-        $users = $searchResponse->json();
-        if (empty($users)) return;
-
+        $users = $userResponse->json();
+        if (empty($users)) throw new \Exception("User Keycloak tidak ditemukan saat ubah status.");
+        
         $keycloakUserId = $users[0]['id'];
 
         $updateResponse = Http::withToken($token)
             ->put("{$baseUrl}/admin/realms/{$realm}/users/{$keycloakUserId}", [
-                'enabled' => (bool) $isActive,
+                'username' => $email, // FIX: Username wajib dikirim ulang ke Keycloak!
+                'enabled'  => (bool) $isActive,
             ]);
 
-        if ($updateResponse->status() !== 204) {
-            throw new \Exception('Server Keycloak menolak perubahan status.');
-        }
+        if ($updateResponse->status() !== 204) throw new \Exception('Server Keycloak menolak perubahan status.');
     }
 
     // ========================================================================
@@ -515,15 +530,13 @@ class UserController extends Controller
 
     /**
      * Sinkronisasi Realm Role 'admin' di Keycloak.
-     * Pasang role jika user adalah admin, cabut jika bukan.
      */
     private function syncKeycloakAdminRole($email, $role): void
     {
-        $baseUrl = env('KEYCLOAK_BASE_URL');
+        $baseUrl = env('KEYCLOAK_SERVER_URL');
         $realm   = env('KEYCLOAK_REALM');
         $token   = $this->getKeycloakAdminToken();
 
-        // 1. Cari User ID di Keycloak
         $userResponse = Http::withToken($token)->get("{$baseUrl}/admin/realms/{$realm}/users", [
             'email' => $email,
             'exact' => true,
@@ -533,22 +546,18 @@ class UserController extends Controller
         if (empty($users)) return;
         $userId = $users[0]['id'];
 
-        // 2. Ambil Data Realm Role 'admin' dari Keycloak
-        $roleResponse = Http::withToken($token)
-            ->get("{$baseUrl}/admin/realms/{$realm}/roles/admin");
+        $roleResponse = Http::withToken($token)->get("{$baseUrl}/admin/realms/{$realm}/roles/admin");
 
+        // FIX: Jangan batalkan proses jika role admin belum dibuat di Keycloak
         if ($roleResponse->status() !== 200) {
-            throw new \Exception(
-                "Gagal mengambil role Keycloak. Status HTTP: " . $roleResponse->status() .
-                " | Pesan: " . $roleResponse->body()
-            );
+            \Illuminate\Support\Facades\Log::warning("Role 'admin' belum dibuat di Keycloak.");
+            return; 
         }
 
         $roleData   = $roleResponse->json();
         $mappingUrl = "{$baseUrl}/admin/realms/{$realm}/users/{$userId}/role-mappings/realm";
         $rolePayload = [['id' => $roleData['id'], 'name' => $roleData['name']]];
 
-        // 3. Pasang atau Cabut Role
         if (strtolower($role) === 'admin') {
             Http::withToken($token)->post($mappingUrl, $rolePayload);
         } else {
@@ -562,15 +571,18 @@ class UserController extends Controller
     private function syncKeycloakClientRoles($userId, $appIds): void
     {
         $token   = $this->getKeycloakAdminToken();
-        $baseUrl = env('KEYCLOAK_BASE_URL');
+        $baseUrl = env('KEYCLOAK_SERVER_URL');
         $realm   = env('KEYCLOAK_REALM');
 
         $apps = Application::whereIn('id', $appIds)->get();
 
         foreach ($apps as $app) {
-            $clientUuid = $app->client_id_keycloak;
-            $roleName   = 'access'; // Sesuaikan nama role di Client Keycloak
+            $clientUuid = $app->keycloak_client_uuid;
+            
+            // FIX: Lewati aplikasi yang belum memiliki UUID Keycloak (Aman dari error)
+            if (empty($clientUuid)) continue; 
 
+            $roleName   = 'access'; 
             $roleResponse = Http::withToken($token)
                 ->get("{$baseUrl}/admin/realms/{$realm}/clients/{$clientUuid}/roles/{$roleName}");
 
@@ -590,13 +602,16 @@ class UserController extends Controller
     private function clearAllKeycloakClientRoles($userId): void
     {
         $token   = $this->getKeycloakAdminToken();
-        $baseUrl = env('KEYCLOAK_BASE_URL');
+        $baseUrl = env('KEYCLOAK_SERVER_URL');
         $realm   = env('KEYCLOAK_REALM');
 
         $apps = Application::all();
 
         foreach ($apps as $app) {
-            $clientUuid = $app->client_id_keycloak;
+            $clientUuid = $app->keycloak_client_uuid;
+
+            // FIX: Lewati aplikasi yang belum memiliki UUID Keycloak
+            if (empty($clientUuid)) continue;
 
             $currentRoles = Http::withToken($token)
                 ->get("{$baseUrl}/admin/realms/{$realm}/users/{$userId}/role-mappings/clients/{$clientUuid}")

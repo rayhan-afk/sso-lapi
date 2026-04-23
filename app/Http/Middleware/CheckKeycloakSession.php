@@ -26,7 +26,7 @@ class CheckKeycloakSession
 
         try {
             $token = $this->getAdminToken();
-            $baseUrl = env('KEYCLOAK_BASE_URL');
+            $baseUrl = env('KEYCLOAK_SERVER_URL'); 
             $realm = env('KEYCLOAK_REALM');
             $email = Auth::user()->email;
 
@@ -76,7 +76,7 @@ class CheckKeycloakSession
 
     private function getAdminToken()
     {
-        $response = Http::asForm()->post(env('KEYCLOAK_BASE_URL')."/realms/".env('KEYCLOAK_REALM')."/protocol/openid-connect/token", [
+        $response = Http::asForm()->post(env('KEYCLOAK_SERVER_URL')."/realms/".env('KEYCLOAK_REALM')."/protocol/openid-connect/token", [
             'grant_type'    => 'client_credentials',
             'client_id'     => env('KEYCLOAK_ADMIN_CLIENT_ID'),
             'client_secret' => env('KEYCLOAK_ADMIN_CLIENT_SECRET'),

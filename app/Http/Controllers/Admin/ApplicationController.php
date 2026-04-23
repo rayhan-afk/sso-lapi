@@ -85,32 +85,35 @@ class ApplicationController extends Controller
      */
     public function store(Request $request)
     {
+        // 1. SESUAIKAN NAMA INPUT DENGAN FORM HTML
         $request->validate([
-            'name' => 'required|string|max:150',
-            'redirect_uri' => 'required|url',
-            'status' => 'required|in:active,disabled',
+            'app_name'     => 'required|string|max:150', // Ubah 'name' menjadi 'app_name'
+            'url_aplikasi' => 'required|url',            // Ubah 'redirect_uri' menjadi 'url_aplikasi'
+            'status'       => 'required|in:active,disabled',
         ]);
 
         try {
-            // 1. Generate Client ID unik
-            $clientId = Str::slug($request->name) . '-' . Str::lower(Str::random(5));
+            // 2. Generate Client ID unik (gunakan $request->app_name)
+            $clientId = Str::slug($request->app_name) . '-' . Str::lower(Str::random(5));
             
-            // 2. Simpan ke Database Lokal
+            // 3. Simpan ke Database Lokal (gunakan $request->app_name dan $request->url_aplikasi)
             $app = Application::create([
-                'app_name'      => $request->name,
+                'app_name'      => $request->app_name, 
                 'client_id'     => $clientId,
-                'url_aplikasi'  => $request->redirect_uri,
+                'url_aplikasi'  => $request->url_aplikasi, 
                 'status'        => $request->status,
             ]);
 
-            // 3. Daftarkan ke Keycloak, buat Role, & ambil UUID
-           $this->registerToKeycloak($app);
+            // 4. Daftarkan ke Keycloak, buat Role, & ambil UUID
+            $this->registerToKeycloak($app);
 
             return redirect()->route('applications.index')->with('success', 'Aplikasi & Client Keycloak berhasil dibuat!');
         } catch (\Exception $e) {
-            // Jika gagal di Keycloak, hapus record yang sempat tersimpan di lokal agar tidak duplikat
-            if (isset($app)) $app->delete();
-            return redirect()->back()->withInput()->with('error', 'Gagal Simpan: ' . $e->getMessage());
+            // Munculkan pesan error asli jika gagal di Keycloak
+            dd("GAGAL SIMPAN KEYCLOAK: " . $e->getMessage()); 
+            
+            // if (isset($app)) $app->delete();
+            // return redirect()->back()->withInput()->with('error', 'Gagal Simpan: ' . $e->getMessage());
         }
     }
 
@@ -140,22 +143,24 @@ class ApplicationController extends Controller
 
     private function getAdminToken()
     {
-        $baseUrl = env('KEYCLOAK_BASE_URL');
-        $response = Http::asForm()->post("{$baseUrl}/realms/master/protocol/openid-connect/token", [
-            'grant_type' => 'password',
-            'client_id'  => 'admin-cli',
-            'username'   => env('KEYCLOAK_ADMIN_USER'),
-            'password'   => env('KEYCLOAK_ADMIN_PASS'),
+        $baseUrl = env('KEYCLOAK_SERVER_URL');
+        $realm   = env('KEYCLOAK_REALM');
+
+        // Gunakan metode Client Credentials yang sama dengan UserController
+        $response = Http::asForm()->post("{$baseUrl}/realms/{$realm}/protocol/openid-connect/token", [
+            'grant_type'    => 'client_credentials',
+            'client_id'     => env('KEYCLOAK_ADMIN_CLIENT_ID'),
+            'client_secret' => env('KEYCLOAK_ADMIN_CLIENT_SECRET'),
         ]);
 
-        if ($response->failed()) throw new \Exception("Gagal mengambil Admin Token Keycloak.");
-        return $response->json()['access_token'];
+        if ($response->failed()) throw new \Exception("Gagal mengambil Admin Token Keycloak: " . $response->body());
+        return $response->json('access_token');
     }
 
     private function registerToKeycloak($app)
     {
         $token = $this->getAdminToken();
-        $baseUrl = env('KEYCLOAK_BASE_URL');
+        $baseUrl = env('KEYCLOAK_SERVER_URL'); // SUDAH DIPERBAIKI
         $realm = env('KEYCLOAK_REALM');
 
         // 1. Buat Client Baru di Keycloak
@@ -187,14 +192,14 @@ class ApplicationController extends Controller
         // 5. Update data lokal dengan UUID dan Secret
         $app->update([
             'client_secret' => $secret,
-            'keycloak_client_uuid' => $internalId
+            'keycloak_client_uuid' => $internalId // Perhatikan nama kolom ini
         ]);
     }
 
     private function updateInKeycloak($clientId, $data)
     {
         $token = $this->getAdminToken();
-        $baseUrl = env('KEYCLOAK_BASE_URL');
+        $baseUrl = env('KEYCLOAK_SERVER_URL'); // SUDAH DIPERBAIKI
         $realm = env('KEYCLOAK_REALM');
 
         $clients = Http::withToken($token)->get("{$baseUrl}/admin/realms/{$realm}/clients", ['clientId' => $clientId])->json();
@@ -207,7 +212,7 @@ class ApplicationController extends Controller
     private function deleteFromKeycloak($clientId)
     {
         $token = $this->getAdminToken();
-        $baseUrl = env('KEYCLOAK_BASE_URL');
+        $baseUrl = env('KEYCLOAK_SERVER_URL'); // SUDAH DIPERBAIKI
         $realm = env('KEYCLOAK_REALM');
 
         $clients = Http::withToken($token)->get("{$baseUrl}/admin/realms/{$realm}/clients", ['clientId' => $clientId])->json();

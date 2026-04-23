@@ -26,64 +26,8 @@ class AuthController extends Controller
     public function callback()
     {
         try {
-            // Ambil data user dari Keycloak secara stateless
-            $keycloakUser = Socialite::driver('keycloak')->stateless()->user();
-            
-            // Cari user di database lokal berdasarkan email
-            $user = User::where('email', $keycloakUser->getEmail())->first();
-
-            if (!$user) {
-                // Buat user baru jika belum ada
-                $user = User::create([
-                    'id'       => (string) Str::uuid(), // Memastikan ID menggunakan UUID sesuai UserController kamu
-                    'email'    => $keycloakUser->getEmail(),
-                    'nama'     => $keycloakUser->getName(),
-                    'password' => bcrypt(Str::random(16)), 
-                    'is_active'=> true,
-                    'role'     => 'user'
-                ]);
-            } else {
-                // Update nama jika sudah ada
-                $user->update([
-                    'nama' => $keycloakUser->getName(),
-                ]);
-            }
-
-            // Cek apakah akun dinonaktifkan oleh admin
-            if ($user->is_active == 0) {
-                $keycloakBaseUrl = env('KEYCLOAK_BASE_URL');
-                $realm = env('KEYCLOAK_REALM');
-                $clientId = env('KEYCLOAK_CLIENT_ID');
-                $redirectUri = urlencode(url('/?error=Akun_Dinonaktifkan_Oleh_Admin'));
-                
-                return redirect("{$keycloakBaseUrl}/realms/{$realm}/protocol/openid-connect/logout?client_id={$clientId}&post_logout_redirect_uri={$redirectUri}");
-            }
-
-            // LOGIN-KAN USER KE SESSION LARAVEL
-            Auth::login($user);
-
-            // KUNCI PERBAIKAN: Ambil ID Sesi Keycloak (session_state) dari dua jalur
-            // 1. Dari data raw Socialite
-            // 2. Dari parameter URL (fallback)
-            $sid = $keycloakUser->getRaw()['session_state'] ?? request('session_state');
-
-            if ($sid) {
-                session(['keycloak_session_id' => $sid]);
-            }
-
-            // PAKSA SIMPAN SESSION
-            session()->save();
-
-            // Redirect ke halaman dashboard
-            return redirect()->route('dashboard');
-
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
-            $response = $e->getResponse();
-            $responseBodyAsString = $response->getBody()->getContents();
-            dd("Error Komunikasi Keycloak (ClientException):", $responseBodyAsString);
-        } catch (\Exception $e) {
-            dd('Error Sistem:', $e->getMessage());
-            // Kita paksa Socialite menggunakan host.docker.internal khusus untuk proses ini
+            // --- 1. AMBIL DATA USER (Dari sso-lapi-docker) ---
+            // Menggunakan konfigurasi host.docker.internal khusus untuk proses ini
             $keycloakUser = Socialite::driver('keycloak')
                 ->setConfig(new \SocialiteProviders\Manager\Config(
                     env('KEYCLOAK_CLIENT_ID'),
@@ -97,44 +41,82 @@ class AuthController extends Controller
                 ->stateless()
                 ->user();
 
-            // --- 1. PROSES PENYIMPANAN KE DATABASE (HYBRID SSO) ---
-            $user = User::updateOrCreate(
-                ['email' => $keycloakUser->getEmail()],
-                [
-                    'id'               => $keycloakUser->getId(),
-                    'nama'             => $keycloakUser->getName(),
-                    'password'         => bcrypt(Str::random(16)),
-                    'is_active'        => true,
-                    // TAMBAHAN: Simpan access_token ke database
-                    'sso_access_token' => $keycloakUser->token 
-                ]
-            );
+            // --- 2. PROSES PENYIMPANAN KE DATABASE (Gabungan) ---
+            // Cari user di database lokal berdasarkan email
+            $user = User::where('email', $keycloakUser->getEmail())->first();
 
+            if (!$user) {
+                // Buat user baru menggunakan UUID & simpan access_token
+                $user = User::create([
+                    'id'               => (string) Str::uuid(), 
+                    'email'            => $keycloakUser->getEmail(),
+                    'nama'             => $keycloakUser->getName(),
+                    'password'         => bcrypt(Str::random(16)), 
+                    'is_active'        => true,
+                    'role'             => 'user',
+                    'sso_access_token' => $keycloakUser->token 
+                ]);
+            } else {
+                // Update nama dan access_token jika user sudah ada
+                $user->update([
+                    'nama'             => $keycloakUser->getName(),
+                    'sso_access_token' => $keycloakUser->token
+                ]);
+            }
+
+            // --- 3. CEK STATUS AKTIF (Dari main) ---
+            // Cek apakah akun dinonaktifkan oleh admin
+            if ($user->is_active == 0) {
+                $keycloakBaseUrl = env('KEYCLOAK_BASE_URL');
+                $realm = env('KEYCLOAK_REALM');
+                $clientId = env('KEYCLOAK_CLIENT_ID');
+                $redirectUri = urlencode(url('/?error=Akun_Dinonaktifkan_Oleh_Admin'));
+                
+                return redirect("{$keycloakBaseUrl}/realms/{$realm}/protocol/openid-connect/logout?client_id={$clientId}&post_logout_redirect_uri={$redirectUri}");
+            }
+
+            // --- 4. LOGIN & LOGGING (Dari sso-lapi-docker) ---
             Auth::login($user);
 
             $appSso = Application::where('client_id', 'sso-lapi')->first();
-            $appId = $appSso ? $appSso->id : 1; // Fallback ke 1 jika data belum ada di database
+            $appId = $appSso ? $appSso->id : 1; 
 
             ActivityLogger::log(
                 'LOGIN_SSO', 
                 'User berhasil login ke Portal SSO', 
                 $user->id, 
-                $appId // Menggunakan ID yang dinamis
+                $appId
             );
 
-            // --- 2. PROSES PENYIMPANAN KE SESSION ---
-            // Simpan access_token ke session untuk verifikasi Middleware (Satpam)
+            // --- 5. PROSES PENYIMPANAN KE SESSION (Gabungan) ---
+            
+            // A. Session State untuk Back-Channel Logout (main)
+            $sid = $keycloakUser->getRaw()['session_state'] ?? request('session_state');
+            if ($sid) {
+                session(['keycloak_session_id' => $sid]);
+            }
+
+            // B. Access Token untuk Middleware (sso-lapi-docker)
             session(['sso_hybrid_token' => $keycloakUser->token]);
 
-            // Ambil id_token (biasanya ada di response body OIDC) untuk keperluan Logout Global
+            // C. ID Token untuk Logout Global (sso-lapi-docker)
             $idToken = $keycloakUser->accessTokenResponseBody['id_token'] ?? null;
             if ($idToken) {
                 session(['sso_id_token' => $idToken]);
             }
 
+            // Paksa simpan session sebelum redirect
+            session()->save();
+
             return redirect()->route('dashboard');
 
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            // Tangkap error spesifik Guzzle dari Keycloak (main)
+            $response = $e->getResponse();
+            $responseBodyAsString = $response->getBody()->getContents();
+            dd("Error Komunikasi Keycloak (ClientException):", $responseBodyAsString);
         } catch (\Exception $e) {
+            // Tangkap error umum dengan hint Docker (sso-lapi-docker)
             return response()->json([
                 'message' => 'SSO Error: ' . $e->getMessage(),
                 'hint' => 'Pastikan Docker container Laravel bisa melakukan ping ke host.docker.internal'

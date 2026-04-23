@@ -6,7 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 
 // Pastikan namespace ini sesuai dengan lokasi asli file Controller Anda di folder App/Http/Controllers/
-use App\Http\Controllers\UserController; 
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ApplicationController; 
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\LogActivityController;
